@@ -1,0 +1,23 @@
+[package]
+name = 'rambutan'
+publish = false
+version = '0.1.0'
+edition = '2021'
+rust-version = '1.88'
+
+[lib]
+crate-type = [ 'rlib', 'staticlib' ]
+name = 'rambutan'
+
+[[bin]]
+name = 'document'
+path = 'document.rs'
+
+[dependencies]
+extendr-api = '*'
+lychee-lib = "0.24.2"
+tokio = { version = "1.38.2", features = ["rt-multi-thread"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
