@@ -1,0 +1,3 @@
+This directory intentionally has no DESCRIPTION file. It exists to test
+check_package()'s error path for a directory that isn't an R package source
+tree.

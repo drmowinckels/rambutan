@@ -15,7 +15,9 @@ path = 'document.rs'
 
 [dependencies]
 extendr-api = '*'
+futures = "0.3.32"
 lychee-lib = "0.24.2"
+regex = "1.12.4"
 tokio = { version = "1.38.2", features = ["rt-multi-thread"] }
 
 [profile.release]

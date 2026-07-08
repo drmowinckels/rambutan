@@ -11,4 +11,23 @@ NULL
 #' @export
 check_url <- function(url) .Call(wrap__check_url, url)
 
+#' Check multiple URLs concurrently with lychee.
+#' @param urls Character vector of URLs to check.
+#' @param excludes Character vector of regular expressions; URLs matching
+#'   any pattern are treated as excluded rather than checked. Empty for none.
+#' @return A list of parallel vectors: `is_success`, `code`, `details`, one
+#'   entry per element of `urls`, in the same order.
+#' @noRd
+check_urls_impl <- function(urls, excludes) .Call(wrap__check_urls_impl, urls, excludes)
+
+#' Scan files, directories, or glob patterns for links and check each one.
+#' @param paths Character vector of file paths, directories, or glob
+#'   patterns (e.g. `"**/*.md"`) to scan for links.
+#' @param excludes Character vector of regular expressions; URLs matching
+#'   any pattern are treated as excluded rather than checked. Empty for none.
+#' @return A list of parallel vectors: `source`, `line`, `column`, `url`,
+#'   `is_success`, `code`, `details`, one entry per discovered link.
+#' @noRd
+check_paths_impl <- function(paths, excludes) .Call(wrap__check_paths_impl, paths, excludes)
+
 # nolint end

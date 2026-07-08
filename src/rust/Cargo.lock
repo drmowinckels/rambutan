@@ -2477,7 +2477,9 @@ name = "rambutan"
 version = "0.1.0"
 dependencies = [
  "extendr-api",
+ "futures",
  "lychee-lib",
+ "regex",
  "tokio",
 ]
 

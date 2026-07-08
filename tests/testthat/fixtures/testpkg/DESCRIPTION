@@ -1,0 +1,12 @@
+Package: testpkg
+Title: Test Package
+Version: 0.0.0.9000
+Authors@R: person("Test", "Person", email = "test@example.com", role = c("aut", "cre"))
+Description: A test package. See https://description.example.com for more
+    info.
+License: MIT + file LICENSE
+URL: https://url-field.example.com
+BugReports: https://bugreports.example.com
+Encoding: UTF-8
+VignetteBuilder: knitr
+Suggests: knitr, rmarkdown
