@@ -13,17 +13,24 @@ const CONCURRENCY: usize = 8;
 
 // A current-thread runtime is used instead of the multi-threaded default:
 // our workload is I/O-bound concurrent HTTP checks (no CPU parallelism
-// needed), and the multi-threaded scheduler's persistent background OS
-// threads were observed to leave the R process exiting non-zero on
-// Windows after a fully passing test run, since those threads outlive
-// the runtime's callers and complicate process/DLL teardown.
+// needed), so nothing is lost by driving it on one thread.
+//
+// The runtime is intentionally leaked (never dropped) rather than stored
+// directly in the OnceLock. Tokio's `Runtime::drop` does its own thread/
+// driver teardown, and on Windows that logic running during process or
+// DLL exit (a restricted context -- see DLL_PROCESS_DETACH) was observed
+// to make the R subprocess exit non-zero even after a fully passing test
+// run printed its summary and returned normally. Leaking guarantees that
+// teardown code never executes; the OS reclaims everything at process
+// exit regardless.
 fn runtime() -> &'static Runtime {
-    static RUNTIME: OnceLock<Runtime> = OnceLock::new();
-    RUNTIME.get_or_init(|| {
-        tokio::runtime::Builder::new_current_thread()
+    static RUNTIME: OnceLock<&'static Runtime> = OnceLock::new();
+    *RUNTIME.get_or_init(|| {
+        let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
-            .expect("failed to start tokio runtime")
+            .expect("failed to start tokio runtime");
+        Box::leak(Box::new(rt))
     })
 }
 
