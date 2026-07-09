@@ -21,6 +21,7 @@ Imports:
     tools,
     utils
 Suggests:
+    curl,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
