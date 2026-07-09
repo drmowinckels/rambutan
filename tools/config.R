@@ -79,13 +79,19 @@ cfg <- if (is_debug) "debug" else "release"
 is_macos <- Sys.info()[["sysname"]] == "Darwin"
 .macos_deployment_target_export <- if (is_macos) {
   dt <- tryCatch(
-    system("R CMD config MACOSX_DEPLOYMENT_TARGET", intern = TRUE),
+    system(
+      "R CMD config MACOSX_DEPLOYMENT_TARGET",
+      intern = TRUE,
+      ignore.stderr = TRUE
+    ),
     error = function(e) ""
   )
-  dt <- paste(dt, collapse = "")
-  if (
-    dt == "" || grepl("no information for variable", dt, ignore.case = TRUE)
-  ) {
+  dt <- trimws(paste(dt, collapse = ""))
+  # `R CMD config` can print unrelated wrapper-script notices (e.g.
+  # "'R' should not be used without a path") to stdout instead of a
+  # clean error, so only trust output that actually looks like a
+  # version number; anything else falls back to a safe default.
+  if (!grepl("^[0-9]+(\\.[0-9]+)*$", dt)) {
     dt <- Sys.getenv("MACOSX_DEPLOYMENT_TARGET", unset = "11.0")
   }
   paste0("MACOSX_DEPLOYMENT_TARGET=\"", dt, "\" ")
