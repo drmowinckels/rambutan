@@ -4,13 +4,12 @@
 \alias{check_urls}
 \title{Check multiple URLs concurrently}
 \usage{
-check_urls(urls, excludes = character())
+check_urls(urls, options = lychee_options())
 }
 \arguments{
 \item{urls}{Character vector of URLs to check.}
 
-\item{excludes}{Character vector of regular expressions. URLs matching
-any pattern are treated as excluded rather than checked.}
+\item{options}{A \code{lychee_options} object created by \code{\link[=lychee_options]{lychee_options()}}.}
 }
 \value{
 A data frame with one row per element of \code{urls} (in the same

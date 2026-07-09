@@ -1,8 +1,11 @@
+mod config;
+
+use config::RambutanConfig;
 use extendr_api::prelude::*;
 use futures::stream::{self, StreamExt};
-use lychee_lib::{BaseInfo, Client, ClientBuilder, Collector, Input};
-use regex::RegexSet;
+use lychee_lib::{BaseInfo, Client, Collector, Input, StatusCodeSelector};
 use std::collections::HashSet;
+use std::str::FromStr;
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 
@@ -13,11 +16,66 @@ fn runtime() -> &'static Runtime {
     RUNTIME.get_or_init(|| Runtime::new().expect("failed to start tokio runtime"))
 }
 
-fn build_client(excludes: &[String]) -> std::result::Result<Client, String> {
-    let regex_set = RegexSet::new(excludes).map_err(|e| format!("invalid exclude pattern: {e}"))?;
-    ClientBuilder::builder()
-        .excludes(regex_set)
-        .build()
+/// Flatten the extendr-friendly scalar/vector arguments coming from R's
+/// `lychee_options()` into a `RambutanConfig`. Kept separate from
+/// `#[extendr]` functions so the three call sites share one conversion.
+#[allow(clippy::too_many_arguments)]
+fn config_from_args(
+    exclude: Vec<String>,
+    include: Vec<String>,
+    timeout: Nullable<f64>,
+    max_redirects: Nullable<f64>,
+    max_retries: Nullable<f64>,
+    retry_wait_time: Nullable<f64>,
+    user_agent: Nullable<String>,
+    method: Nullable<String>,
+    accept: Vec<String>,
+    exclude_all_private: Nullable<bool>,
+    exclude_private: Nullable<bool>,
+    exclude_link_local: Nullable<bool>,
+    exclude_loopback: Nullable<bool>,
+    require_https: Nullable<bool>,
+    include_mail: Nullable<bool>,
+    header_names: Vec<String>,
+    header_values: Vec<String>,
+) -> std::result::Result<RambutanConfig, String> {
+    let accept = if accept.is_empty() {
+        None
+    } else {
+        Some(
+            StatusCodeSelector::from_str(&accept.join(","))
+                .map_err(|e| format!("invalid accept status code range: {e}"))?,
+        )
+    };
+
+    if header_names.len() != header_values.len() {
+        return Err("header names and values must be the same length".to_string());
+    }
+
+    Ok(RambutanConfig {
+        exclude,
+        include,
+        timeout: timeout.into_option().map(|v| v as u64),
+        max_redirects: max_redirects.into_option().map(|v| v as usize),
+        max_retries: max_retries.into_option().map(|v| v as u64),
+        retry_wait_time: retry_wait_time.into_option().map(|v| v as u64),
+        user_agent: user_agent.into_option(),
+        method: method.into_option(),
+        accept,
+        exclude_all_private: exclude_all_private.into_option(),
+        exclude_private: exclude_private.into_option(),
+        exclude_link_local: exclude_link_local.into_option(),
+        exclude_loopback: exclude_loopback.into_option(),
+        require_https: require_https.into_option(),
+        include_mail: include_mail.into_option(),
+        header: header_names.into_iter().zip(header_values).collect(),
+    })
+}
+
+fn build_client(overrides: RambutanConfig) -> std::result::Result<Client, String> {
+    let file_config = config::load_file_config()?;
+    let merged = config::merge(overrides, file_config);
+    config::apply_to_builder(&merged)?
         .client()
         .map_err(|e| e.to_string())
 }
@@ -31,42 +89,110 @@ fn status_fields(status: &lychee_lib::Status) -> (bool, Option<i32>, String) {
 }
 
 /// Check a single URL with lychee and return its status.
-/// @param url A single URL string to check.
-/// @return A list with `url`, `is_success`, `code`, and `details`.
-/// @export
+/// @noRd
 #[extendr]
-fn check_url(url: &str) -> List {
+#[allow(clippy::too_many_arguments)]
+fn check_url_impl(
+    url: &str,
+    exclude: Vec<String>,
+    include: Vec<String>,
+    timeout: Nullable<f64>,
+    max_redirects: Nullable<f64>,
+    max_retries: Nullable<f64>,
+    retry_wait_time: Nullable<f64>,
+    user_agent: Nullable<String>,
+    method: Nullable<String>,
+    accept: Vec<String>,
+    exclude_all_private: Nullable<bool>,
+    exclude_private: Nullable<bool>,
+    exclude_link_local: Nullable<bool>,
+    exclude_loopback: Nullable<bool>,
+    require_https: Nullable<bool>,
+    include_mail: Nullable<bool>,
+    header_names: Vec<String>,
+    header_values: Vec<String>,
+) -> std::result::Result<List, String> {
+    let config = config_from_args(
+        exclude,
+        include,
+        timeout,
+        max_redirects,
+        max_retries,
+        retry_wait_time,
+        user_agent,
+        method,
+        accept,
+        exclude_all_private,
+        exclude_private,
+        exclude_link_local,
+        exclude_loopback,
+        require_https,
+        include_mail,
+        header_names,
+        header_values,
+    )?;
+    let client = build_client(config)?;
     let url_owned = url.to_string();
 
     let (is_success, code, details) = runtime().block_on(async {
-        let client = ClientBuilder::default()
-            .client()
-            .expect("failed to build lychee client");
-
         match client.check(url_owned.as_str()).await {
             Ok(response) => status_fields(&response.status()),
             Err(e) => (false, None, e.to_string()),
         }
     });
 
-    list!(
+    Ok(list!(
         url = url,
         is_success = is_success,
         code = code,
         details = details
-    )
+    ))
 }
 
 /// Check multiple URLs concurrently with lychee.
-/// @param urls Character vector of URLs to check.
-/// @param excludes Character vector of regular expressions; URLs matching
-///   any pattern are treated as excluded rather than checked. Empty for none.
-/// @return A list of parallel vectors: `is_success`, `code`, `details`, one
-///   entry per element of `urls`, in the same order.
 /// @noRd
 #[extendr]
-fn check_urls_impl(urls: Vec<String>, excludes: Vec<String>) -> std::result::Result<List, String> {
-    let client = build_client(&excludes)?;
+#[allow(clippy::too_many_arguments)]
+fn check_urls_impl(
+    urls: Vec<String>,
+    exclude: Vec<String>,
+    include: Vec<String>,
+    timeout: Nullable<f64>,
+    max_redirects: Nullable<f64>,
+    max_retries: Nullable<f64>,
+    retry_wait_time: Nullable<f64>,
+    user_agent: Nullable<String>,
+    method: Nullable<String>,
+    accept: Vec<String>,
+    exclude_all_private: Nullable<bool>,
+    exclude_private: Nullable<bool>,
+    exclude_link_local: Nullable<bool>,
+    exclude_loopback: Nullable<bool>,
+    require_https: Nullable<bool>,
+    include_mail: Nullable<bool>,
+    header_names: Vec<String>,
+    header_values: Vec<String>,
+) -> std::result::Result<List, String> {
+    let config = config_from_args(
+        exclude,
+        include,
+        timeout,
+        max_redirects,
+        max_retries,
+        retry_wait_time,
+        user_agent,
+        method,
+        accept,
+        exclude_all_private,
+        exclude_private,
+        exclude_link_local,
+        exclude_loopback,
+        require_https,
+        include_mail,
+        header_names,
+        header_values,
+    )?;
+    let client = build_client(config)?;
 
     let results: Vec<(bool, Option<i32>, String)> = runtime().block_on(async {
         let checks = urls.iter().map(|url| {
@@ -98,19 +224,49 @@ fn check_urls_impl(urls: Vec<String>, excludes: Vec<String>) -> std::result::Res
 }
 
 /// Scan files, directories, or glob patterns for links and check each one.
-/// @param paths Character vector of file paths, directories, or glob
-///   patterns (e.g. `"**/*.md"`) to scan for links.
-/// @param excludes Character vector of regular expressions; URLs matching
-///   any pattern are treated as excluded rather than checked. Empty for none.
-/// @return A list of parallel vectors: `source`, `line`, `column`, `url`,
-///   `is_success`, `code`, `details`, one entry per discovered link.
 /// @noRd
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn check_paths_impl(
     paths: Vec<String>,
-    excludes: Vec<String>,
+    exclude: Vec<String>,
+    include: Vec<String>,
+    timeout: Nullable<f64>,
+    max_redirects: Nullable<f64>,
+    max_retries: Nullable<f64>,
+    retry_wait_time: Nullable<f64>,
+    user_agent: Nullable<String>,
+    method: Nullable<String>,
+    accept: Vec<String>,
+    exclude_all_private: Nullable<bool>,
+    exclude_private: Nullable<bool>,
+    exclude_link_local: Nullable<bool>,
+    exclude_loopback: Nullable<bool>,
+    require_https: Nullable<bool>,
+    include_mail: Nullable<bool>,
+    header_names: Vec<String>,
+    header_values: Vec<String>,
 ) -> std::result::Result<List, String> {
-    let client = build_client(&excludes)?;
+    let config = config_from_args(
+        exclude,
+        include,
+        timeout,
+        max_redirects,
+        max_retries,
+        retry_wait_time,
+        user_agent,
+        method,
+        accept,
+        exclude_all_private,
+        exclude_private,
+        exclude_link_local,
+        exclude_loopback,
+        require_https,
+        include_mail,
+        header_names,
+        header_values,
+    )?;
+    let client = build_client(config)?;
 
     let mut inputs = HashSet::with_capacity(paths.len());
     for path in &paths {
@@ -188,7 +344,7 @@ fn check_paths_impl(
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod rambutan;
-    fn check_url;
+    fn check_url_impl;
     fn check_urls_impl;
     fn check_paths_impl;
 }

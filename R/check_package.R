@@ -8,6 +8,7 @@
 #'
 #' @param path Path to the root of an R package's source tree. Defaults to
 #'   the current directory.
+#' @param options A `lychee_options` object created by [lychee_options()].
 #' @return A data frame with one row per checked URL: `url`, `parent` (the
 #'   file the URL was found in), `is_success`, `code`, and `details`.
 #' @export
@@ -15,8 +16,9 @@
 #' \dontrun{
 #' check_package(".")
 #' }
-check_package <- function(path = ".") {
+check_package <- function(path = ".", options = lychee_options()) {
   path <- normalizePath(path, mustWork = TRUE)
+  stopifnot(inherits(options, "lychee_options"))
 
   if (!file.exists(file.path(path, "DESCRIPTION"))) {
     stop(
@@ -38,7 +40,7 @@ check_package <- function(path = ".") {
     ))
   }
 
-  checked <- lapply(unique(db$URL), check_url)
+  checked <- lapply(unique(db$URL), check_url, options = options)
   checked <- do.call(
     rbind,
     lapply(checked, as.data.frame, stringsAsFactors = FALSE)

@@ -6,28 +6,15 @@
 NULL
 
 #' Check a single URL with lychee and return its status.
-#' @param url A single URL string to check.
-#' @return A list with `url`, `is_success`, `code`, and `details`.
-#' @export
-check_url <- function(url) .Call(wrap__check_url, url)
+#' @noRd
+check_url_impl <- function(url, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values) .Call(wrap__check_url_impl, url, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values)
 
 #' Check multiple URLs concurrently with lychee.
-#' @param urls Character vector of URLs to check.
-#' @param excludes Character vector of regular expressions; URLs matching
-#'   any pattern are treated as excluded rather than checked. Empty for none.
-#' @return A list of parallel vectors: `is_success`, `code`, `details`, one
-#'   entry per element of `urls`, in the same order.
 #' @noRd
-check_urls_impl <- function(urls, excludes) .Call(wrap__check_urls_impl, urls, excludes)
+check_urls_impl <- function(urls, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values) .Call(wrap__check_urls_impl, urls, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values)
 
 #' Scan files, directories, or glob patterns for links and check each one.
-#' @param paths Character vector of file paths, directories, or glob
-#'   patterns (e.g. `"**/*.md"`) to scan for links.
-#' @param excludes Character vector of regular expressions; URLs matching
-#'   any pattern are treated as excluded rather than checked. Empty for none.
-#' @return A list of parallel vectors: `source`, `line`, `column`, `url`,
-#'   `is_success`, `code`, `details`, one entry per discovered link.
 #' @noRd
-check_paths_impl <- function(paths, excludes) .Call(wrap__check_paths_impl, paths, excludes)
+check_paths_impl <- function(paths, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values) .Call(wrap__check_paths_impl, paths, exclude, include, timeout, max_redirects, max_retries, retry_wait_time, user_agent, method, accept, exclude_all_private, exclude_private, exclude_link_local, exclude_loopback, require_https, include_mail, header_names, header_values)
 
 # nolint end

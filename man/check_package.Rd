@@ -4,11 +4,13 @@
 \alias{check_package}
 \title{Check every URL referenced in an R package's sources}
 \usage{
-check_package(path = ".")
+check_package(path = ".", options = lychee_options())
 }
 \arguments{
 \item{path}{Path to the root of an R package's source tree. Defaults to
 the current directory.}
+
+\item{options}{A \code{lychee_options} object created by \code{\link[=lychee_options]{lychee_options()}}.}
 }
 \value{
 A data frame with one row per checked URL: \code{url}, \code{parent} (the

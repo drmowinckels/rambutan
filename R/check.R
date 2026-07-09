@@ -1,11 +1,31 @@
+#' Check a single URL
+#'
+#' @param url A single URL string to check.
+#' @param options A `lychee_options` object created by [lychee_options()].
+#' @return A list with `url`, `is_success`, `code`, and `details`.
+#' @export
+#' @examples
+#' \dontrun{
+#' check_url("https://www.r-project.org")
+#' }
+check_url <- function(url, options = lychee_options()) {
+  stopifnot(
+    is.character(url),
+    length(url) == 1L,
+    inherits(options, "lychee_options")
+  )
+
+  args <- lychee_options_impl_args(options)
+  do.call(check_url_impl, c(list(url = url), args))
+}
+
 #' Check multiple URLs concurrently
 #'
 #' Vectorised version of [check_url()]. URLs are checked concurrently rather
 #' than one at a time.
 #'
 #' @param urls Character vector of URLs to check.
-#' @param excludes Character vector of regular expressions. URLs matching
-#'   any pattern are treated as excluded rather than checked.
+#' @param options A `lychee_options` object created by [lychee_options()].
 #' @return A data frame with one row per element of `urls` (in the same
 #'   order): `url`, `is_success`, `code`, `details`.
 #' @export
@@ -13,10 +33,11 @@
 #' \dontrun{
 #' check_urls(c("https://www.r-project.org", "https://cran.r-project.org"))
 #' }
-check_urls <- function(urls, excludes = character()) {
-  stopifnot(is.character(urls), is.character(excludes))
+check_urls <- function(urls, options = lychee_options()) {
+  stopifnot(is.character(urls), inherits(options, "lychee_options"))
 
-  res <- check_urls_impl(urls, excludes)
+  args <- lychee_options_impl_args(options)
+  res <- do.call(check_urls_impl, c(list(urls = urls), args))
   data.frame(
     url = urls,
     is_success = res$is_success,
@@ -33,8 +54,7 @@ check_urls <- function(urls, excludes = character()) {
 #'
 #' @param paths Character vector of file paths, directories, or glob
 #'   patterns (e.g. `"**/*.md"`) to scan for links.
-#' @param excludes Character vector of regular expressions. URLs matching
-#'   any pattern are treated as excluded rather than checked.
+#' @param options A `lychee_options` object created by [lychee_options()].
 #' @return A data frame with one row per discovered link: `source`, `line`,
 #'   `column`, `url`, `is_success`, `code`, `details`.
 #' @export
@@ -43,9 +63,10 @@ check_urls <- function(urls, excludes = character()) {
 #' check_paths("README.md")
 #' check_paths(c("README.md", "vignettes"))
 #' }
-check_paths <- function(paths, excludes = character()) {
-  stopifnot(is.character(paths), is.character(excludes))
+check_paths <- function(paths, options = lychee_options()) {
+  stopifnot(is.character(paths), inherits(options, "lychee_options"))
 
-  res <- check_paths_impl(paths, excludes)
+  args <- lychee_options_impl_args(options)
+  res <- do.call(check_paths_impl, c(list(paths = paths), args))
   as.data.frame(res, stringsAsFactors = FALSE)
 }

@@ -41,4 +41,9 @@ describe("check_package()", {
     expect_true(all(!res$is_success))
     expect_true(all(is.na(res$code)))
   })
+
+  it("threads the options argument through to every checked URL", {
+    res <- check_package(testpkg_dir, options = lychee_options(exclude = "."))
+    expect_true(all(grepl("exclude", res$details)))
+  })
 })
