@@ -11,9 +11,20 @@ use tokio::runtime::Runtime;
 
 const CONCURRENCY: usize = 8;
 
+// A current-thread runtime is used instead of the multi-threaded default:
+// our workload is I/O-bound concurrent HTTP checks (no CPU parallelism
+// needed), and the multi-threaded scheduler's persistent background OS
+// threads were observed to leave the R process exiting non-zero on
+// Windows after a fully passing test run, since those threads outlive
+// the runtime's callers and complicate process/DLL teardown.
 fn runtime() -> &'static Runtime {
     static RUNTIME: OnceLock<Runtime> = OnceLock::new();
-    RUNTIME.get_or_init(|| Runtime::new().expect("failed to start tokio runtime"))
+    RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("failed to start tokio runtime")
+    })
 }
 
 /// Flatten the extendr-friendly scalar/vector arguments coming from R's
