@@ -1,0 +1,42 @@
+# Temporary, fast-iteration workflow for isolating a Windows-only issue
+# where the R subprocess doesn't exit cleanly after a fully passing
+# check_url() call. Skips R CMD check's full build/test/vignette/Rd
+# pipeline entirely -- just loads the package and calls one function, so
+# each iteration is minutes instead of 20-40. Delete once resolved.
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/lychee-options]
+
+name: debug-windows-exit.yaml
+
+permissions: read-all
+
+jobs:
+  debug:
+    runs-on: windows-latest
+    # Guard against a genuine hang (this is exactly what we're isolating)
+    # burning the default 360-minute job timeout.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src/rust -> target
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::devtools
+          needs: check
+
+      - name: Load and call check_url once
+        shell: Rscript {0}
+        run: |
+          devtools::load_all(quiet = TRUE)
+          print(check_url("https://www.r-project.org"))
+          cat("DONE\n")

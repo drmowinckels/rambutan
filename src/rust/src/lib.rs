@@ -6,32 +6,32 @@ use futures::stream::{self, StreamExt};
 use lychee_lib::{BaseInfo, Client, Collector, Input, StatusCodeSelector};
 use std::collections::HashSet;
 use std::str::FromStr;
-use std::sync::OnceLock;
-use tokio::runtime::Runtime;
+use std::time::Duration;
 
 const CONCURRENCY: usize = 8;
 
-// A current-thread runtime is used instead of the multi-threaded default:
-// our workload is I/O-bound concurrent HTTP checks (no CPU parallelism
-// needed), so nothing is lost by driving it on one thread.
+// A fresh current-thread runtime is built and explicitly torn down for
+// every call, rather than reused from a process-lifetime static. Our
+// workload is I/O-bound concurrent HTTP checks (no CPU parallelism
+// needed), so nothing is lost by driving it on one thread, and per-call
+// setup cost is negligible next to a network request.
 //
-// The runtime is intentionally leaked (never dropped) rather than stored
-// directly in the OnceLock. Tokio's `Runtime::drop` does its own thread/
-// driver teardown, and on Windows that logic running during process or
-// DLL exit (a restricted context -- see DLL_PROCESS_DETACH) was observed
-// to make the R subprocess exit non-zero even after a fully passing test
-// run printed its summary and returned normally. Leaking guarantees that
-// teardown code never executes; the OS reclaims everything at process
-// exit regardless.
-fn runtime() -> &'static Runtime {
-    static RUNTIME: OnceLock<&'static Runtime> = OnceLock::new();
-    *RUNTIME.get_or_init(|| {
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .expect("failed to start tokio runtime");
-        Box::leak(Box::new(rt))
-    })
+// A persistent static runtime (plain or leaked) left Tokio-managed
+// threads/drivers alive past the end of `.Call()`, whose teardown could
+// then only happen during process or DLL exit -- a restricted context on
+// Windows (see DLL_PROCESS_DETACH) where that kind of thread
+// synchronization is a known source of crashes and hangs. Building,
+// running, and shutting the runtime down within this function guarantees
+// no Tokio state survives past the call, so nothing is left for process
+// exit to tear down.
+fn run_async<F: std::future::Future>(future: F) -> F::Output {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to start tokio runtime");
+    let result = rt.block_on(future);
+    rt.shutdown_timeout(Duration::from_millis(100));
+    result
 }
 
 /// Flatten the extendr-friendly scalar/vector arguments coming from R's
@@ -152,7 +152,7 @@ fn check_url_impl(
     let client = build_client(config)?;
     let url_owned = url.to_string();
 
-    let (is_success, code, details) = runtime().block_on(async {
+    let (is_success, code, details) = run_async(async {
         match client.check(url_owned.as_str()).await {
             Ok(response) => status_fields(&response.status()),
             Err(e) => (false, None, e.to_string()),
@@ -212,7 +212,7 @@ fn check_urls_impl(
     )?;
     let client = build_client(config)?;
 
-    let results: Vec<(bool, Option<i32>, String)> = runtime().block_on(async {
+    let results: Vec<(bool, Option<i32>, String)> = run_async(async {
         let checks = urls.iter().map(|url| {
             let client = &client;
             async move {
@@ -292,8 +292,8 @@ fn check_paths_impl(
         inputs.insert(input);
     }
 
-    let results: Vec<(String, i32, Option<i32>, String, bool, Option<i32>, String)> = runtime()
-        .block_on(async {
+    let results: Vec<(String, i32, Option<i32>, String, bool, Option<i32>, String)> =
+        run_async(async {
             let collector = Collector::new(None, BaseInfo::none()).map_err(|e| e.to_string())?;
 
             let requests: Vec<_> = collector
