@@ -30,3 +30,4 @@ Suggests:
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: http://drmowinckels.io/rambutan/
+BugReports: https://github.com/drmowinckels/rambutan/issues
