@@ -1,0 +1,61 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# rambutan <a href="http://drmowinckels.io/rambutan/"><img src="man/figures/logo.png" align="right" height="138" alt="rambutan website" /></a>
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/drmowinckels/rambutan/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/drmowinckels/rambutan/actions/workflows/R-CMD-check.yaml)
+[![coverage](https://raw.githubusercontent.com/drmowinckels/rambutan/coverage/badges/coverage.svg)](https://github.com/drmowinckels/rambutan/actions/workflows/test-coverage.yaml)
+<!-- badges: end -->
+
+rambutan is an R interface to [lychee](https://github.com/lycheeverse/lychee), a fast, async link checker written in Rust. It wraps `lychee-lib` via [extendr](https://extendr.github.io/) to check URLs, files, and directories for broken links, and to scan an R package's own sources for broken URLs the way `R CMD check --as-cran` and CRAN's incoming checks do.
+
+## Installation
+
+rambutan is not yet on CRAN. You can install the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
+pak::pak("drmowinckels/rambutan")
+```
+
+Building rambutan requires Cargo and rustc (Rust's package manager and compiler); see [rustup.rs](https://rustup.rs/) for installation instructions.
+
+## Example
+
+Check a single URL:
+
+```{r example}
+library(rambutan)
+check_url("https://www.r-project.org")
+```
+
+Check several URLs concurrently:
+
+```{r check-urls}
+check_urls(c("https://www.r-project.org", "https://cran.r-project.org"))
+```
+
+Scan a file or directory for links and check every one found:
+
+```{r check-paths, eval = FALSE}
+check_paths("README.md")
+```
+
+Scan an R package's own sources (`DESCRIPTION`, Rd files, `NEWS.md`, `CITATION`, vignettes) for URLs, mirroring CRAN's own URL check:
+
+```{r check-package, eval = FALSE}
+check_package(".")
+```
