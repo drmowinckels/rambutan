@@ -1,0 +1,172 @@
+# Configuring lychee checks
+
+``` r
+
+library(rambutan)
+```
+
+rambutan’s defaults are usually fine for a quick check, but real
+projects tend to need at least one exception: a flaky internal host, a
+longer timeout for a slow API, or a status code that should count as
+“fine, actually”. This vignette covers the two ways to configure
+[`check_url()`](http://drmowinckels.io/rambutan/reference/check_url.md),
+[`check_urls()`](http://drmowinckels.io/rambutan/reference/check_urls.md),
+[`check_paths()`](http://drmowinckels.io/rambutan/reference/check_paths.md),
+and
+[`check_package()`](http://drmowinckels.io/rambutan/reference/check_package.md),
+and how they combine.
+
+## Two ways to configure
+
+- **[`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)**
+  – pass an options object to any `check_*()` call. Good for one-off
+  overrides, or for settings that differ between calls.
+- **`lychee.toml`** – drop a `lychee.toml` file in your working
+  directory and every `check_*()` call picks it up automatically. Good
+  for settings you want to share between an interactive session and CI,
+  or for a project that already has a `lychee.toml` for the [‘lychee’
+  CLI](https://github.com/lycheeverse/lychee) – rambutan reads the same
+  file, using the same field names.
+
+Every argument to
+[`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+shares its name with the matching `lychee.toml` field, so the two are
+interchangeable once you know one of them.
+
+## Precedence
+
+When both a `lychee.toml` file and a
+[`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+argument set the same thing:
+
+- For most fields (`timeout`, `max_retries`, `accept`, `user_agent`, …),
+  whatever you pass to
+  [`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+  wins over the file, and the file wins over lychee-lib’s own built-in
+  default.
+- For `exclude`, `include`, and `header`, the two sources are
+  **combined** rather than one replacing the other – a URL excluded by
+  either the file or the function call is excluded.
+
+The example below writes a `lychee.toml` that excludes port `9001`, then
+calls
+[`check_urls()`](http://drmowinckels.io/rambutan/reference/check_urls.md)
+with an `exclude` for port `9002`. Both URLs end up excluded, which is
+only possible if the file and the argument were merged rather than one
+overriding the other. Nothing here touches the network – `9001`/`9002`
+on localhost are never listened on, so the check is deterministic and
+offline-safe.
+
+``` r
+
+project_dir <- withr::local_tempdir()
+writeLines('exclude = ["9001"]', file.path(project_dir, "lychee.toml"))
+
+withr::with_dir(project_dir, {
+  check_urls(
+    c("http://localhost:9001/aaa", "http://localhost:9002/bbb"),
+    options = lychee_options(exclude = "9002")
+  )
+})
+#>                         url is_success code
+#> 1 http://localhost:9001/aaa      FALSE   NA
+#> 2 http://localhost:9002/bbb      FALSE   NA
+#>                                details
+#> 1 This is due to your 'exclude' values
+#> 2 This is due to your 'exclude' values
+```
+
+Both rows report `is_success = FALSE` with `details` explaining they
+were excluded – not that the connection failed – confirming the pattern
+from the file and the pattern from
+[`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+were both applied.
+
+## Configuring per call with `lychee_options()`
+
+``` r
+
+check_urls(
+  c(
+    "https://www.r-project.org",
+    "https://api.example.com/flaky-endpoint"
+  ),
+  options = lychee_options(
+    timeout = 30,
+    max_retries = 5,
+    accept = c("200..=204", "429"),
+    user_agent = "rambutan-ci"
+  )
+)
+```
+
+[`lychee_options()`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+validates its arguments as it builds the object, so a typo like passing
+a vector where a single value is expected fails immediately rather than
+surfacing a confusing error from inside lychee:
+
+``` r
+
+lychee_options(timeout = c(10, 20))
+#> Error in `lychee_options()`:
+#> ! `timeout` must be a single number or NULL
+```
+
+## Sharing settings with a `lychee.toml` file
+
+If you already run the `lychee` CLI in CI (for example via
+`lycheeverse/lychee-action`), rambutan can read the exact same
+`lychee.toml` – no duplication needed:
+
+``` r
+
+lychee_toml <- '
+exclude = ["\\\\.local", "^https://internal\\\\."]
+timeout = 20
+max_retries = 3
+accept = ["200..=204", "429"]
+
+[header]
+Accept = "text/html"
+'
+writeLines(lychee_toml, file.path(project_dir, "lychee.toml"))
+```
+
+With this file in the working directory, a plain call now runs with
+those settings applied automatically – no `options` argument needed:
+
+``` r
+
+withr::with_dir(project_dir, {
+  check_urls(c("http://svc.local", "https://internal.example.com"))
+})
+#>                            url is_success code
+#> 1             http://svc.local      FALSE   NA
+#> 2 https://internal.example.com      FALSE   NA
+#>                                details
+#> 1 This is due to your 'exclude' values
+#> 2 This is due to your 'exclude' values
+```
+
+In your own project this looks even simpler, since you likely won’t need
+to juggle a temporary working directory:
+
+``` r
+
+check_package(".")
+```
+
+Options rambutan doesn’t (yet) support are simply ignored rather than
+causing an error, so a `lychee.toml` written for the full `lychee` CLI
+keeps working here even if it sets something rambutan doesn’t expose.
+
+## Reference
+
+See
+[`?lychee_options`](http://drmowinckels.io/rambutan/reference/lychee_options.md)
+for the full list of supported fields – `exclude`/`include`, `timeout`,
+`max_redirects`, `max_retries`, `retry_wait_time`, `user_agent`,
+`method`, `accept`, the
+`exclude_all_private`/`exclude_private`/`exclude_link_local`/
+`exclude_loopback` IP filters, `require_https`, `include_mail`, and
+`header`.
