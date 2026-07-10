@@ -1,4 +1,6 @@
 url: http://drmowinckels.io/rambutan/
 template:
   bootstrap: 5
-
+  bslib:
+    primary: "#a23e4b"
+    navbar-bg: "#592930"
