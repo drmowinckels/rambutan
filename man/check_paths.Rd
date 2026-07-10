@@ -4,14 +4,13 @@
 \alias{check_paths}
 \title{Check links found in files, directories, or glob patterns}
 \usage{
-check_paths(paths, excludes = character())
+check_paths(paths, options = lychee_options())
 }
 \arguments{
 \item{paths}{Character vector of file paths, directories, or glob
 patterns (e.g. \code{"**/*.md"}) to scan for links.}
 
-\item{excludes}{Character vector of regular expressions. URLs matching
-any pattern are treated as excluded rather than checked.}
+\item{options}{A \code{lychee_options} object created by \code{\link[=lychee_options]{lychee_options()}}.}
 }
 \value{
 A data frame with one row per discovered link: \code{source}, \code{line},

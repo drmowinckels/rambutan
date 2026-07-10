@@ -70,6 +70,35 @@ cfg <- if (is_debug) "debug" else "release"
   ""
 )
 
+# On macOS, Cargo/rustc otherwise default to targeting the SDK version of
+# the build machine, which is often newer than the deployment target R
+# itself links against. That mismatch produces a
+# "was built for newer 'macOS' version" linker warning, which fails
+# R CMD check under --as-cran. Propagate R's own configured deployment
+# target to the Cargo build so both sides agree.
+is_macos <- Sys.info()[["sysname"]] == "Darwin"
+.macos_deployment_target_export <- if (is_macos) {
+  dt <- tryCatch(
+    system(
+      "R CMD config MACOSX_DEPLOYMENT_TARGET",
+      intern = TRUE,
+      ignore.stderr = TRUE
+    ),
+    error = function(e) ""
+  )
+  dt <- trimws(paste(dt, collapse = ""))
+  # `R CMD config` can print unrelated wrapper-script notices (e.g.
+  # "'R' should not be used without a path") to stdout instead of a
+  # clean error, so only trust output that actually looks like a
+  # version number; anything else falls back to a safe default.
+  if (!grepl("^[0-9]+(\\.[0-9]+)*$", dt)) {
+    dt <- Sys.getenv("MACOSX_DEPLOYMENT_TARGET", unset = "11.0")
+  }
+  paste0("MACOSX_DEPLOYMENT_TARGET=\"", dt, "\" ")
+} else {
+  ""
+}
+
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
@@ -102,7 +131,12 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CLEAN_TARGET@", .clean_targets, x = _) |>
   gsub("@LIBDIR@", .libdir, x = _) |>
   gsub("@TARGET@", .target, x = _) |>
-  gsub("@PANIC_EXPORTS@", .panic_exports, x = _)
+  gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
+  gsub(
+    "@MACOSX_DEPLOYMENT_TARGET_EXPORT@",
+    .macos_deployment_target_export,
+    x = _
+  )
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

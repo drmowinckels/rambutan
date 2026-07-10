@@ -2478,9 +2478,13 @@ version = "0.1.0"
 dependencies = [
  "extendr-api",
  "futures",
+ "http",
  "lychee-lib",
  "regex",
+ "reqwest",
+ "serde",
  "tokio",
+ "toml",
 ]
 
 [[package]]

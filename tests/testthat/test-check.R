@@ -14,7 +14,7 @@ describe("check_urls()", {
   it("excludes URLs matching a supplied pattern", {
     result <- check_urls(
       "http://localhost:9999/whatever",
-      excludes = "localhost"
+      options = lychee_options(exclude = "localhost")
     )
     expect_false(result$is_success)
     expect_true(is.na(result$code))
@@ -46,7 +46,7 @@ describe("check_paths()", {
   it("excludes links matching a supplied pattern", {
     result <- check_paths(
       test_path("fixtures/sample-links.md"),
-      excludes = "localhost"
+      options = lychee_options(exclude = "localhost")
     )
     excluded <- result[result$url == "http://localhost:9999/whatever", ]
     expect_false(excluded$is_success)
