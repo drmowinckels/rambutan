@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Fast Link Checking Powered by lychee">
 <meta name="description" content="An interface to the lychee Rust crate (&lt;https://github.com/lycheeverse/lychee&gt;), a fast, async link checker. Wraps lychee-lib via extendr to check URLs, files, and directories for broken links.">
 <meta property="og:description" content="An interface to the lychee Rust crate (&lt;https://github.com/lycheeverse/lychee&gt;), a fast, async link checker. Wraps lychee-lib via extendr to check URLs, files, and directories for broken links.">
+<meta property="og:image" content="http://drmowinckels.io/rambutan/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -38,11 +39,13 @@
 <li><a class="dropdown-item" href="articles/lychee-options.html">Configuring lychee checks</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/drmowinckels/rambutan/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -50,9 +53,65 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9">
-An interface to the 'lychee' Rust crate (&lt;<a href="https://github.com/lycheeverse/lychee" class="external-link">https://github.com/lycheeverse/lychee</a>&gt;), a fast, async link checker. Wraps 'lychee-lib' via 'extendr' to check URLs, files, and directories for broken links.
-  </main><aside class="col-md-3"><div class="license">
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="rambutan-">rambutan 
+<a class="anchor" aria-label="anchor" href="#rambutan-"></a>
+</h1>
+</div>
+<!-- badges: start -->
+
+<p>rambutan is an R interface to <a href="https://github.com/lycheeverse/lychee" class="external-link">lychee</a>, a fast, async link checker written in Rust. It wraps <code>lychee-lib</code> via <a href="https://extendr.github.io/" class="external-link">extendr</a> to check URLs, files, and directories for broken links, and to scan an R package’s own sources for broken URLs the way <code>R CMD check --as-cran</code> and CRAN’s incoming checks do.</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>rambutan is not yet on CRAN. You can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"drmowinckels/rambutan"</span><span class="op">)</span></span></code></pre></div>
+<p>Building rambutan requires Cargo and rustc (Rust’s package manager and compiler); see <a href="https://rustup.rs/" class="external-link">rustup.rs</a> for installation instructions.</p>
+</div>
+<div class="section level2">
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h2>
+<p>Check a single URL:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://drmowinckels.io/rambutan/">rambutan</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/check_url.html">check_url</a></span><span class="op">(</span><span class="st">"https://www.r-project.org"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $url</span></span>
+<span><span class="co">#&gt; [1] "https://www.r-project.org"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $is_success</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $code</span></span>
+<span><span class="co">#&gt; [1] 200</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $details</span></span>
+<span><span class="co">#&gt; [1] "200 OK"</span></span></code></pre></div>
+<p>Check several URLs concurrently:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_urls.html">check_urls</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://www.r-project.org"</span>, <span class="st">"https://cran.r-project.org"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                          url is_success code details</span></span>
+<span><span class="co">#&gt; 1  https://www.r-project.org       TRUE  200  200 OK</span></span>
+<span><span class="co">#&gt; 2 https://cran.r-project.org       TRUE  200  200 OK</span></span></code></pre></div>
+<p>Scan a file or directory for links and check every one found:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_paths.html">check_paths</a></span><span class="op">(</span><span class="st">"README.md"</span><span class="op">)</span></span></code></pre></div>
+<p>Scan an R package’s own sources (<code>DESCRIPTION</code>, Rd files, <code>NEWS.md</code>, <code>CITATION</code>, vignettes) for URLs, mirroring CRAN’s own URL check:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_package.html">check_package</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/drmowinckels/rambutan/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/drmowinckels/rambutan/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
@@ -76,7 +135,13 @@ An interface to the 'lychee' Rust crate (&lt;<a href="https://github.com/lycheev
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/drmowinckels/rambutan/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/drmowinckels/rambutan/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/drmowinckels/rambutan/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://raw.githubusercontent.com/drmowinckels/rambutan/coverage/badges/coverage.svg" alt="coverage"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>

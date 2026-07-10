@@ -8,6 +8,9 @@
 
 ## Citation
 
+Source:
+[`DESCRIPTION`](https://github.com/drmowinckels/rambutan/blob/main/DESCRIPTION)
+
 Mowinckel A (2026). *rambutan: Fast Link Checking Powered by 'lychee'*.
 R package version 0.0.0.9000, <http://drmowinckels.io/rambutan/>.
 
