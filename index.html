@@ -98,8 +98,13 @@
 <p>Scan a file or directory for links and check every one found:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/check_paths.html">check_paths</a></span><span class="op">(</span><span class="st">"README.md"</span><span class="op">)</span></span></code></pre></div>
-<p>Scan an R package’s own sources (<code>DESCRIPTION</code>, Rd files, <code>NEWS.md</code>, <code>CITATION</code>, vignettes) for URLs, mirroring CRAN’s own URL check:</p>
+<p><code><a href="reference/check_file.html">check_file()</a></code>, <code><a href="reference/check_folder.html">check_folder()</a></code>, and <code><a href="reference/check_project.html">check_project()</a></code> cover the common cases on top of <code><a href="reference/check_paths.html">check_paths()</a></code>: a single file, a folder (optionally non-recursive or restricted to certain extensions), and a whole project directory that skips dependency and build directories like <code>node_modules</code>, <code>renv</code>, and <code>target</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_file.html">check_file</a></span><span class="op">(</span><span class="st">"README.md"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/check_folder.html">check_folder</a></span><span class="op">(</span><span class="st">"vignettes"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/check_project.html">check_project</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>Scan an R package’s own sources (<code>DESCRIPTION</code>, Rd files, <code>NEWS.md</code>, <code>CITATION</code>, vignettes) for URLs, mirroring CRAN’s own URL check:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/check_package.html">check_package</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

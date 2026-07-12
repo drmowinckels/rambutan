@@ -31,6 +31,8 @@ Useful links:
 
 - <http://drmowinckels.io/rambutan/>
 
+- Report bugs at <https://github.com/drmowinckels/rambutan/issues>
+
 ## Author
 
 **Maintainer**: Athanasia Mo Mowinckel <a.m.mowinckel@psykologi.uio.no>

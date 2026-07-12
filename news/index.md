@@ -26,3 +26,19 @@
   [`check_package()`](http://drmowinckels.io/rambutan/reference/check_package.md).
   Options can also be read from a `lychee.toml` file in the working
   directory.
+- Added
+  [`check_file()`](http://drmowinckels.io/rambutan/reference/check_file.md),
+  [`check_folder()`](http://drmowinckels.io/rambutan/reference/check_folder.md),
+  and
+  [`check_project()`](http://drmowinckels.io/rambutan/reference/check_project.md)
+  as convenience wrappers around
+  [`check_paths()`](http://drmowinckels.io/rambutan/reference/check_paths.md):
+  [`check_file()`](http://drmowinckels.io/rambutan/reference/check_file.md)
+  validates a single file,
+  [`check_folder()`](http://drmowinckels.io/rambutan/reference/check_folder.md)
+  adds `recursive` and `extensions` options for scanning a directory,
+  and
+  [`check_project()`](http://drmowinckels.io/rambutan/reference/check_project.md)
+  recursively scans a whole project directory while skipping dependency
+  and build-artifact directories (`node_modules`, `renv`, `packrat`,
+  `target`, `dist`, `build`, `vendor`) as well as hidden directories.

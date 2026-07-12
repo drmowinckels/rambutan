@@ -61,6 +61,23 @@ Scan a file or directory for links and check every one found:
 check_paths("README.md")
 ```
 
+[`check_file()`](http://drmowinckels.io/rambutan/reference/check_file.md),
+[`check_folder()`](http://drmowinckels.io/rambutan/reference/check_folder.md),
+and
+[`check_project()`](http://drmowinckels.io/rambutan/reference/check_project.md)
+cover the common cases on top of
+[`check_paths()`](http://drmowinckels.io/rambutan/reference/check_paths.md):
+a single file, a folder (optionally non-recursive or restricted to
+certain extensions), and a whole project directory that skips dependency
+and build directories like `node_modules`, `renv`, and `target`:
+
+``` r
+
+check_file("README.md")
+check_folder("vignettes")
+check_project(".")
+```
+
 Scan an R package’s own sources (`DESCRIPTION`, Rd files, `NEWS.md`,
 `CITATION`, vignettes) for URLs, mirroring CRAN’s own URL check:
 
