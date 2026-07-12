@@ -32,6 +32,7 @@ may resolve with a future upstream update.
 Useful links:
 \itemize{
   \item \url{http://drmowinckels.io/rambutan/}
+  \item Report bugs at \url{https://github.com/drmowinckels/rambutan/issues}
 }
 
 }

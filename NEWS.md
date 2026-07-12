@@ -12,3 +12,10 @@
   by `check_url()`, `check_urls()`, `check_paths()`, and `check_package()`.
   Options can also be read from a `lychee.toml` file in the working
   directory.
+- Added `check_file()`, `check_folder()`, and `check_project()` as
+  convenience wrappers around `check_paths()`: `check_file()` validates a
+  single file, `check_folder()` adds `recursive` and `extensions` options
+  for scanning a directory, and `check_project()` recursively scans a
+  whole project directory while skipping dependency and build-artifact
+  directories (`node_modules`, `renv`, `packrat`, `target`, `dist`,
+  `build`, `vendor`) as well as hidden directories.
