@@ -4,3 +4,5 @@ template:
   bslib:
     primary: "#a23e4b"
     navbar-bg: "#592930"
+    link-color-dark: "#cf9ca3"
+  light-switch: true
