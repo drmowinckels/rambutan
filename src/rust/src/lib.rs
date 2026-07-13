@@ -103,7 +103,12 @@ static INSTALL_CRYPTO_PROVIDER: std::sync::Once = std::sync::Once::new();
 
 fn ensure_crypto_provider() {
     INSTALL_CRYPTO_PROVIDER.call_once(|| {
-        let _ = rustls::crypto::ring::default_provider().install_default();
+        let result = rustls::crypto::ring::default_provider().install_default();
+        debug_assert!(
+            result.is_ok(),
+            "a rustls CryptoProvider was already installed before rambutan could install ring; \
+             the aws-lc-rs Windows exit crash this guards against may resurface"
+        );
     });
 }
 
@@ -373,6 +378,19 @@ fn check_paths_impl(
         code = code,
         details = details
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ensure_crypto_provider_installs_a_default_and_is_idempotent() {
+        ensure_crypto_provider();
+        ensure_crypto_provider();
+
+        assert!(rustls::crypto::CryptoProvider::get_default().is_some());
+    }
 }
 
 // Macro to generate exports.
