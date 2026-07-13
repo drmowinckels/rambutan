@@ -17,8 +17,9 @@ jobs:
   debug:
     runs-on: windows-latest
     # Guard against a genuine hang (this is exactly what we're isolating)
-    # burning the default 360-minute job timeout.
-    timeout-minutes: 10
+    # burning the default 360-minute job timeout. 20 min covers a cold
+    # cargo cache building the full dependency tree from scratch.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
