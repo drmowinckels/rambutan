@@ -19,3 +19,8 @@
   whole project directory while skipping dependency and build-artifact
   directories (`node_modules`, `renv`, `packrat`, `target`, `dist`,
   `build`, `vendor`) as well as hidden directories.
+- Fixed a Windows-only crash (`STATUS_STACK_BUFFER_OVERRUN`) that hit the R
+  process after a rambutan call had already completed and returned its
+  result, caused by the `aws-lc-rs` TLS crypto backend's teardown at
+  DLL/process exit. rambutan now installs rustls's `ring` provider before
+  building its HTTP client, avoiding the crash.

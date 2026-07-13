@@ -11,23 +11,6 @@ An interface to the 'lychee' Rust crate
 Wraps 'lychee-lib' via 'extendr' to check URLs, files, and directories
 for broken links.
 }
-\section{Known issue on Windows}{
-
-On Windows, the R process can exit with a non-zero status (a native
-\code{STATUS_STACK_BUFFER_OVERRUN} crash) \emph{after} a rambutan call has
-already completed successfully and returned its result. This happens
-during process/DLL teardown, not during the link check itself --
-calling \code{\link[=check_url]{check_url()}}, \code{\link[=check_urls]{check_urls()}}, \code{\link[=check_paths]{check_paths()}}, or
-\code{\link[=check_package]{check_package()}} interactively returns correct results every time.
-
-It only matters for non-interactive use where the exit code of the R
-process itself is checked, e.g. \verb{Rscript -e 'rambutan::check_url(...)'}
-in a CI step or batch script. The underlying cause is very likely in a
-transitive TLS dependency (\code{aws-lc-rs}, via \code{rustls}) rather than in
-rambutan's own code, so it isn't something fixable here directly; it
-may resolve with a future upstream update.
-}
-
 \seealso{
 Useful links:
 \itemize{
