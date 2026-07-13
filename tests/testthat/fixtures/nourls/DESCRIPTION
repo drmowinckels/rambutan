@@ -1,7 +1,0 @@
-Package: nourls
-Title: Package Without Any URLs
-Version: 0.0.0.9000
-Authors@R: person("Test", "Person", email = "test@example.com", role = c("aut", "cre"))
-Description: A test package with no URLs anywhere in its sources.
-License: MIT + file LICENSE
-Encoding: UTF-8

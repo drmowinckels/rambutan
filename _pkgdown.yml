@@ -1,8 +1,0 @@
-url: http://drmowinckels.io/rambutan/
-template:
-  bootstrap: 5
-  bslib:
-    primary: "#a23e4b"
-    navbar-bg: "#592930"
-    link-color-dark: "#cf9ca3"
-  light-switch: true
