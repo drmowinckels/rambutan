@@ -90,7 +90,25 @@ fn config_from_args(
     })
 }
 
+// reqwest defaults to the aws-lc-rs crypto provider when nothing else has
+// claimed rustls's process-wide default (see reqwest's
+// `default_rustls_crypto_provider()`, which only falls back to aws-lc-rs if
+// `CryptoProvider::get_default()` is still unset). On windows-gnu, aws-lc-rs
+// is suspected to crash the process at DLL/exit teardown (see
+// R-CMD-check.yaml) despite rambutan's own Tokio runtime being fully torn
+// down before returning to R. Installing ring here -- before the first
+// reqwest::Client is ever built -- makes reqwest pick it up instead, so
+// aws-lc-rs's code is compiled in but never exercised at runtime.
+static INSTALL_CRYPTO_PROVIDER: std::sync::Once = std::sync::Once::new();
+
+fn ensure_crypto_provider() {
+    INSTALL_CRYPTO_PROVIDER.call_once(|| {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    });
+}
+
 fn build_client(overrides: RambutanConfig) -> std::result::Result<Client, String> {
+    ensure_crypto_provider();
     let file_config = config::load_file_config()?;
     let merged = config::merge(overrides, file_config);
     config::apply_to_builder(&merged)?
