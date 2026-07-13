@@ -57,23 +57,6 @@ for broken links.</p>
 
 
     <div class="section level2">
-    <h2 id="known-issue-on-windows">Known issue on Windows<a class="anchor" aria-label="anchor" href="#known-issue-on-windows"></a></h2>
-
-
-<p>On Windows, the R process can exit with a non-zero status (a native
-<code>STATUS_STACK_BUFFER_OVERRUN</code> crash) <em>after</em> a rambutan call has
-already completed successfully and returned its result. This happens
-during process/DLL teardown, not during the link check itself –
-calling <code><a href="check_url.html">check_url()</a></code>, <code><a href="check_urls.html">check_urls()</a></code>, <code><a href="check_paths.html">check_paths()</a></code>, or
-<code><a href="check_package.html">check_package()</a></code> interactively returns correct results every time.</p>
-<p>It only matters for non-interactive use where the exit code of the R
-process itself is checked, e.g. <code>Rscript -e 'rambutan::check_url(...)'</code>
-in a CI step or batch script. The underlying cause is very likely in a
-transitive TLS dependency (<code>aws-lc-rs</code>, via <code>rustls</code>) rather than in
-rambutan's own code, so it isn't something fixable here directly; it
-may resolve with a future upstream update.</p>
-    </div>
-    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Useful links:</p><ul><li><p><a href="http://drmowinckels.io/rambutan/">http://drmowinckels.io/rambutan/</a></p></li>
 <li><p>Report bugs at <a href="https://github.com/drmowinckels/rambutan/issues" class="external-link">https://github.com/drmowinckels/rambutan/issues</a></p></li>
